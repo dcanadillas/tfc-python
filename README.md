@@ -2,8 +2,8 @@
 
 This repo contains several scripts in Python to interact with [Terraform Cloud API](https://www.terraform.io/docs/cloud/api/index.html). You can do things in CLI style like:
 * **List** all TFC (Terraform Cloud) workspaces within an organization or variables from a workspace
-* **Create TFC workspaces** or create variables in a workspace
-* **Delete workspaces** in an organization or delete variables in batch mode from a workspace
+* **Create TFC workspaces** or **create variables** in a workspace
+* **Delete workspaces** in an organization or **delete variables in batch mode** from a workspace
 * **Upload a TFC configuration** version and do an [API-Driven run](https://www.terraform.io/docs/cloud/run/api.html) if not using a VCS connection
 
 ## Structure of this repo
