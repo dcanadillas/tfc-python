@@ -1,0 +1,3 @@
+#[var name],[var value],[var type],[var is sensitive]
+name1,value1,env,true
+name2,value2,terraform,false
