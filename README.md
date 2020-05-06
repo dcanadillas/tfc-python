@@ -110,12 +110,12 @@ Check following execution examples:
     Using Python 3.7.7
 
     Using Terraform API token defined in environment variable.
-    usage: Terraform API CLI org list [-h] [-w W] [--var VAR]
+    usage: Terraform API CLI org list [-h] [-w <workspace>] [--var <True|False>]
 
     optional arguments:
-    -h, --help  show this help message and exit
-    -w W        Workspace to list
-    --var VAR   List variables
+    -h, --help          show this help message and exit
+    -w <workspace>      Workspace to list
+    --var <True|False>  List variables
     ```
 
 * Listing workspaces:
