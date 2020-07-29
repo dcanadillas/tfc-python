@@ -85,7 +85,7 @@ Check following execution examples:
 
 * Global command help:
     ```
-    dcanadillas tfc-python > ./tfcpy.sh --help              
+    $ ./tfcpy.sh --help              
     Using Python 3.7.7
 
     Using Terraform API token defined in environment variable.
@@ -106,7 +106,7 @@ Check following execution examples:
 
 * Help for a specific command (list workspaces)
     ```
-    dcanadillas tfc-python > ./tfcpy.sh dcanadillas list --help
+    $ ./tfcpy.sh dcanadillas list --help
     Using Python 3.7.7
 
     Using Terraform API token defined in environment variable.
@@ -120,7 +120,7 @@ Check following execution examples:
 
 * Listing workspaces:
     ```
-    dcanadillas tfc-python > ./tfcpy.sh dcanadillas list 
+    $ ./tfcpy.sh dcanadillas list 
     Using Python 3.7.7
 
     Using Terraform API token defined in environment variable.
@@ -144,6 +144,8 @@ Check following execution examples:
 The `workspaces.py` script is used to manage workspaces and variables from a basic stand point:
 
 * `list`
+  
+  > NOTE: `pagination` is not still implemented, so you will see the first 20 results. It is a `TODO` and will be soon featured.
   * List all workspaces in a TFC organization
     ```
     tfcpy.sh <organization> list
@@ -152,11 +154,13 @@ The `workspaces.py` script is used to manage workspaces and variables from a bas
     ```
     tfcppy.sh <organization> list -w <workspace>
     ```
+
 * `create`
   * Create a workspace in a TFC organization
     ```
     tfcpy.sh <organization> create <workspace_name> [--json <workspace_payload_json_file>]
     ```
+
 * `delete`
   * Delete a workspace from a TFC organization 
     ```
@@ -167,11 +171,14 @@ The `workspaces.py` script is used to manage workspaces and variables from a bas
     tfcpy.sh <organization> delete <workspace_name> \
     --var <varname1> <varname2> ...
     ```
+
 * `vars`
   * Create variables in a workspace from CLI values (as environment variables with `--env`)
+    
+    *(If the variable already exists it will update the value)*
     ```
     tfcpy.sh <organization> vars <workspace_name> \
-    -v <var1_name> <var1_value -v <var2_name> <var2_name> [--env]
+    -v <var1_name> <var1_value -v <var2_name> <var2_value> [--env]
     ```
   * Create variables in a workspace from CSV text file (Format: `name`,`value`,`category[env|terraform]`,`sensitive[true|false]`. First row is ignored)
     ```

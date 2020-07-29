@@ -56,6 +56,7 @@ parser_delete.add_argument('workspace',help='Workspace name')
 parser_delete.add_argument('--var',help='Variables to delete',nargs='*', metavar='<var_name>')
 
 # Subparser arguments for "vars" menu (for create variables)
+# TODO: include a sensitive parameter --sensitive if vars are created with CLI
 parser_var = subparsers.add_parser('vars',help='Create vars')
 parser_var.add_argument('workspace',help='Workspace')
 parser_var.add_argument('-v',help='Vars values',nargs=2,action='append',metavar='<var_name> <var_value>')
@@ -63,6 +64,7 @@ parser_var.add_argument('-f',help='File with var values',type=argparse.FileType(
 parser_var.add_argument('--env',help='Environment variable',action='store_true',default=False)
 parser_var.add_argument('--gcp',type=argparse.FileType('r'),help='GOOGLE_CREDENTIALS key JSON file',\
     metavar='<key_file_path>')
+parser_var.add_argument('--sensitive',help='Sensitive variable',action='store_true',default=False)
 
 args = parser.parse_args()
 
@@ -148,8 +150,9 @@ def delete_var(workspace_id,var_id):
     # return r.json()
 
 # Function to get variables from a workspace
-def get_vars(org,workspace):
-    url = tfapi + '/vars?filter[organization][name]=' + org + '&filter[workspace][name]=' + workspace
+def get_vars(org,workspace_id):
+    #url = tfapi + '/vars?filter[organization][name]=' + org + '&filter[workspace][name]=' + workspace
+    url = tfapi + '/workspaces/' + workspace_id + '/vars'
     r = requests.get(url,headers=headers)
     try:
         r.raise_for_status()
@@ -181,11 +184,30 @@ def create_var(workspace_id,payload,**kwargs):
     if 'env' in kwargs:
         payload['data']['attributes']['category'] = kwargs['env']
     if 'sensitive' in kwargs:
-        payload['data']['attributes']['sensitive'] = 'true'
+        payload['data']['attributes']['sensitive'] = kwargs['sensitive']
 
     url = tfapi + '/workspaces/' + workspace_id + '/vars'
     try:
         r = requests.post(url,headers=headers,json=payload)
+        r.raise_for_status()
+        return r.json()
+    except requests.exceptions.HTTPError as err:
+        print(err.response.text)
+        raise SystemExit(err)
+
+def update_var(workspace_id,var_id,payload,**kwargs):
+    if 'name' in kwargs:
+        payload['data']['attributes']['key'] = kwargs['name']
+    if 'value' in kwargs:
+        payload['data']['attributes']['value'] = kwargs['value']
+    if 'env' in kwargs:
+        payload['data']['attributes']['category'] = kwargs['env']
+    if 'sensitive' in kwargs:
+        payload['data']['attributes']['sensitive'] = kwargs['sensitive']
+
+    url = tfapi + '/workspaces/' + workspace_id + '/vars/' + var_id
+    try:
+        r = requests.patch(url,headers=headers,json=payload)
         r.raise_for_status()
         return r.json()
     except requests.exceptions.HTTPError as err:
@@ -202,7 +224,8 @@ if __name__ == '__main__':
             print(wid)
             wlist = list_workspace(org,wname=args.w)
             print(json.dumps(wlist,indent=2))
-            wvars = get_vars(org,args.w)
+            #wvars = get_vars(org,args.w)
+            wvars = get_vars(org,wid)
             print('\nList of variables for workspace \"' + args.w + '\" is:')
             for i in wvars['data']:
                 print('Name: ' + i['attributes']["key"],'--','Type: ' + i['attributes']["category"],\
@@ -237,6 +260,8 @@ if __name__ == '__main__':
 
     if args.cmd == 'vars':
         wid = get_workspc_id(org,args.workspace)
+        # let's create a list with vars in workspace [[id,name],[id,name],...]
+        wvars_list = [{"varid": i['id'],"varname": i['attributes']['key']} for i in  [item for item in get_vars(org,wid)['data']]]
         if args.v:
             if args.env is True:
                 env = 'env'
@@ -244,7 +269,12 @@ if __name__ == '__main__':
                 env = 'terraform'
             for item in args.v:
                 name,value = item[0],item[1]
-                create_var(wid,var_payload,name=name,value=value,env=env)
+                var_id = [i['varid'] for i in wvars_list if name == i['varname']]
+                print(var_id)
+                if not var_id:
+                    create_var(wid,var_payload,name=name,value=value,env=env,sensitive=args.sensitive)
+                else:
+                    update_var(wid,var_id[0],var_payload,name=name,value=value,env=env,sensitive=args.sensitive)
 
         if args.f:
             print(args.f.name)
