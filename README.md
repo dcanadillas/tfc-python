@@ -47,7 +47,7 @@ I started with bash scripting to play around with TFC API using `curl` for REST 
 * It's easy! If I can do Python, anyone can.
 * It's very handful to deal with JSON, lists, dictionaries and CLI arguments
 * Very straight forward to script REST calls without Curl
-* It's portable. Even though that these scripts are design for MacOS and Linux, it should be easy exporting to Windows
+* It's portable. Even though that these scripts are designed for MacOS and Linux, it should be easy exporting to Windows
 * I love indentation... :-)
 
 ## How-To Guide
