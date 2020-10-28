@@ -295,7 +295,7 @@ if __name__ == '__main__':
         wid = get_workspc_id(org,args.workspace)
         if args.var:
             # Let's get the id to delete the variable
-            wvars = get_vars(org,args.workspace)
+            wvars = get_vars(org,wid)
             varids = []
             for item in wvars['data']:
                 if item['attributes']['key'] in args.var:
@@ -305,7 +305,13 @@ if __name__ == '__main__':
             for item in varids:
                 delete_var(wid,item)
         else:
-            delete_workspace(wid)
+            confirm_delete = input("Are you sure to delete worskpace \"%s\"? (yes/no) " % wid)
+            if confirm_delete[:1] == "y" :
+                print("delete")
+                delete_workspace(wid)
+            else:
+                print("Exiting...")
+                exit()
 
     if args.cmd == 'vars':
         wid = get_workspc_id(org,args.workspace)

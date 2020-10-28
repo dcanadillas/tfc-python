@@ -16,9 +16,11 @@ You will find in this repo three basic group of components:
 The structure of the content repo is as follows:
 ```
 tfc-python
+|__ oldstuff_isolated_scripts (legacy version of scripts)
+|   |__ ...
 |__ tfcpy.sh (Bash shell script as a Python wrapper)
-|__ workspaces.py (Script to list|create|delete TFC workspaces and variables)
-|__ upload-config.py (Script for API-Driven runs in TFC)
+|__ pytfc.py.py (Main script to execute any action list|create|delete|upload)
+|__ uploadconfig.py (Python module to upload aconfiguration)
 |__ templates (Templates folder for file parameters)
 |   |__ var_payload.json (JSON template for a variable payload)
 |   |__ wpayload.json (JSON template for a workspace payload)
@@ -47,7 +49,7 @@ I started with bash scripting to play around with TFC API using `curl` for REST 
 * It's easy! If I can do Python, anyone can.
 * It's very handful to deal with JSON, lists, dictionaries and CLI arguments
 * Very straight forward to script REST calls without Curl
-* It's portable. Even though that these scripts are designed for MacOS and Linux, it should be easy exporting to Windows
+* It's portable. Even though that these scripts are MacOS and Linux ready, it should be easy exporting to Windows
 * I love indentation... :-)
 
 ## How-To Guide
@@ -67,7 +69,7 @@ These scripts are designed to take your TFC token credential between two options
   {
     "credentials": {
         "app.terraform.io": {
-        "token": <your_api_token>
+          "token": <your_api_token>
         }
     }
   }
