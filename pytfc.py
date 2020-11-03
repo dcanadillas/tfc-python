@@ -367,11 +367,11 @@ if __name__ == '__main__':
         wid = get_workspc_id(org,args.workspace)
         print(wid)
 
-        upconf = uploadconf.select_config(uploadconf.config_status(wid))
+        upconf = uploadconf.select_config(uploadconf.config_status(wid,headers))
         if upconf is None:
-            upconf = uploadconf.create_conf(wid,args.run)
+            upconf = uploadconf.create_conf(wid,args.run,headers)
         
         print('The url to upload configuration is: \n' + upconf)
 
         # Upload the configuration content
-        uploadconf.upload_conf(upfile,upconf)            
+        uploadconf.upload_conf(upfile,upconf,headers)            
