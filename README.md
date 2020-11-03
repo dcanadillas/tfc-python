@@ -1,6 +1,6 @@
 # Terraform Cloud API Python scripts
 
-This repo contains several scripts in Python to interact with [Terraform Cloud API](https://www.terraform.io/docs/cloud/api/index.html). You can do things in CLI style like:
+This repo contains a Python wrapper to interact with [Terraform Cloud API](https://www.terraform.io/docs/cloud/api/index.html). You can do things in CLI style like:
 * **List** all TFC (Terraform Cloud) workspaces within an organization or variables from a workspace
 * **Create TFC workspaces** or **create variables** in a workspace
 * **Delete workspaces** in an organization or **delete variables in batch mode** from a workspace
@@ -16,9 +16,11 @@ You will find in this repo three basic group of components:
 The structure of the content repo is as follows:
 ```
 tfc-python
+|__ oldstuff_isolated_scripts (legacy version of scripts)
+|   |__ ...
 |__ tfcpy.sh (Bash shell script as a Python wrapper)
-|__ workspaces.py (Script to list|create|delete TFC workspaces and variables)
-|__ upload-config.py (Script for API-Driven runs in TFC)
+|__ pytfc.py.py (Main script to execute any action list|create|delete|upload)
+|__ uploadconfig.py (Python module to use API driven workflow)
 |__ templates (Templates folder for file parameters)
 |   |__ var_payload.json (JSON template for a variable payload)
 |   |__ wpayload.json (JSON template for a workspace payload)
@@ -47,14 +49,14 @@ I started with bash scripting to play around with TFC API using `curl` for REST 
 * It's easy! If I can do Python, anyone can.
 * It's very handful to deal with JSON, lists, dictionaries and CLI arguments
 * Very straight forward to script REST calls without Curl
-* It's portable. Even though that these scripts are design for MacOS and Linux, it should be easy exporting to Windows
+* It's portable. Even though that these scripts are MacOS and Linux ready, it should be easy exporting to Windows
 * I love indentation... :-)
 
 ## How-To Guide
 ### System requirements
-All Python scripts are using Python 3 and only one "non-native" package, so basically these are the requirements:
+These Python scripts are using Python 3 and only one "non-native" package, so basically these are the requirements:
 
-* Python version 3. (Tested with 3.7.7.)
+* Python version 3. (Tested with 3.7.7+)
 * `pip3` to install `requests` package. (Tested with version 20.0.2)
 * `requests` Python package from [PyPi](https://pypi.org/). (Tested with version 2.23.0)
   * You can install with `pip3 install requests`
@@ -67,14 +69,14 @@ These scripts are designed to take your TFC token credential between two options
   {
     "credentials": {
         "app.terraform.io": {
-        "token": <your_api_token>
+          "token": <your_api_token>
         }
     }
   }
   ```
 * Copying your API token in `TOKEN` environment variable
 
-### Using the scripts
+### Using the script
 You can execute the Python scripts using your `python3` command from the CLI. But you can use the included Bash shell script to wrap it (in case of Linux, Unix or MacOS), so the script verifies that your python version is the right one and exists.
 
 ```bash
@@ -85,23 +87,24 @@ Check following execution examples:
 
 * Global command help:
     ```
-    $ ./tfcpy.sh --help              
-    Using Python 3.7.7
+    $ ./tfcpy.sh --help
+    Using Python 3.7.3
 
-    Using Terraform API token defined in environment variable.
-    usage: Terraform API CLI [-h] org {list,create,delete,vars} ...
+    Using Terraform API token from "/home/david/.terraform.d/credentials.tfrc.json".
+    usage: Terraform API CLI [-h] org {list,create,delete,vars,upload} ...
 
     positional arguments:
-    org                   Terraform organization
-    {list,create,delete,vars}
+      org                   Terraform organization
+      {list,create,delete,vars,upload}
                             sub-command help
         list                listing items
         create              Create workspace
         delete              Delete workspace
         vars                Create vars
+        upload              upload config vars
 
     optional arguments:
-    -h, --help            show this help message and exit
+      -h, --help            show this help message and exit
     ```
 
 * Help for a specific command (list workspaces)
@@ -125,27 +128,20 @@ Check following execution examples:
 
     Using Terraform API token defined in environment variable.
     Parameters selected: Namespace(cmd='list', organization='dcanadillas', var=True, w=None)
-    {
-    "id": "ws-aJHZrWmd1EqN9xHp",
-    "type": "workspaces",
-    "attributes": {
-        "name": "demo1",
 
+    Summary list of names and ids:
+    Workspace: vault-gke-sec --- id: ws-KdRWVngCCSkQQBS4
+    Workspace: vault-gke --- id: ws-iPSySep1svrW7DDC
     ...
-
-    }
-
-    List of names and ids:
-    Workspace: demo1 --- id: ws-aJHZrWmd1EqN9xHp
-    Workspace: hashicorp-playground --- id: ws-DDVsiM34zdqAVDDW
+    ...
     ```
 
-### The *workspaces* script
+### The script commands
 The `workspaces.py` script is used to manage workspaces and variables from a basic stand point:
 
 * `list`
   
-  > NOTE: `pagination` is not still implemented, so you will see the first 20 results. It is a `TODO` and will be soon featured.
+  > NOTE: `pagination` is already implemented, so you will see all listing results, but need to be improved.
   * List all workspaces in a TFC organization
     ```
     tfcpy.sh <organization> list
@@ -192,37 +188,27 @@ The `workspaces.py` script is used to manage workspaces and variables from a bas
 
 You can execute the help menu for every command with `-h` or `--help` argument.
 
-### The *upload-config* script
-This script is designed to use the TFC API to do a [API-Driven run](https://www.terraform.io/docs/cloud/run/api.html) when you are not using a [VCS integration](https://www.terraform.io/docs/cloud/vcs/index.html) with TFC/TFE. This can be very helpful when you cannot use the VCS connection for networking reasons and want to use your CI/CD pipelines or Release Orchestration pipelines to automate infra provisioning triggered to TFC using the API.
+  * Uploading a configuration by the [API-Driven run](https://www.terraform.io/docs/cloud/run/api.html) when you are not using a [VCS integration](https://www.terraform.io/docs/cloud/vcs/index.html) with TFC/TFE. This can be very helpful when you cannot use the VCS connection for networking reasons and want to use your CI/CD pipelines or Release Orchestration pipelines to automate infra provisioning triggered to TFC using the API.
 
-The steps followed by this script are:
-1. It creates a `tar.gz` file from your Terraform Configuration directory
-2. It creates a [Configuration Version](https://www.terraform.io/docs/cloud/api/configuration-versions.html) in TFC using the API
-3. It checks the `pending` Configuration Versions (they may were created, but not uploaded) and asks to use one of them if wanting to
-4. It creates a new Configuration Version if there are no pending ones, or if want to create a new one
-5. It uploads the terraform project to the Configuration Version.
-6. It queues the plan depending on the argument `--run`
+  The steps followed by `upload` command is:
+  1. It creates a `tar.gz` file from your Terraform Configuration directory
+  2. It creates a [Configuration Version](https://www.terraform.io/docs/cloud/api/configuration-versions.html) in TFC using the API
+  3. It checks the `pending` Configuration Versions (they may were created, but not uploaded) and asks to use one of them if wanting to
+  4. It creates a new Configuration Version if there are no pending ones, or if want to create a new one
+  5. It uploads the terraform project to the Configuration Version.
+  6. It queues the plan depending on the argument `--run`
 
-The usage is pretty straight forward:
+  The usage is pretty straight forward:
 
-> NOTE: Don't forget to change the script within the Bash wrapper:
-> 
->  ```bash
->    export PYSCRIPT="./upload-config.py"
->   ```
+  If you don't pass any arguments it takes some default values:
+  - `-d ./`
+  - `-f tfc-upload.tar.gz`
+  - `--run true`
 
-```bash
-tfcpy.sh <organization_name> <workspace_name> \
-    [-d <terraform_dir>] \
-    [-f <tar.gz_filname>] \
-    [--run <true|false>]
-    [-h | --help]
-```
-
-If you don't pass any arguments it takes some default values:
-- `-d ./`
-- `-f tfc-upload.tar.gz`
-- `--run true`
+  So, to upload your Terraform configuration from the current directory:
+  ```bash
+  tfcpy.sh <organization> upload <workspace>
+  ```
 
 ## Use cases
 > WIP: This is a Work In Progress

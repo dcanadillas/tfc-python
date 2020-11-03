@@ -3,8 +3,6 @@
 # GitHub user: dcanadillas
 # Developer email: dcanadillas@hashicorp.com
 
-# You can define your script in an env variable "PYSCRIPT". If not, change your script filename here
-
 if hash python3;then
     echo -e "Using $(python3 --version)\n"
 else
@@ -12,15 +10,15 @@ else
     exit 0
 fi
 
-if [ -z "$PYSCRIPT" ];then
-    echo -e "PYSCRIPT environment variable is not defined. Let's use a default script: \"workspaces.py\""
-    export PYSCRIPT="./workspaces.py" # Change it if applies
+if [[ "${@#-h}" = "$@" && "${@#--help}" = "$@" ]];then 
+    echo "========>"
+    echo "Terraform Organization: $1"
+    echo "Commands used: ${@: 2}"
+    echo "========>"
+    echo -e "\n\n"
+    read -p "Press any key to continue, or Ctrl-C to Cancel..."
 fi
 
-if [ -f "$PYSCRIPT" ]; then
-    python3 "$PYSCRIPT" "$@"
-else
-    echo -e "\nERROR: File \"$PYSCRIPT\" not found!!\n"
-    echo -e "Copy the Python script in $PWD/ or \"export PYSCRIPT=<your_python_script_path>\""
-    exit 0
-fi
+python3 pytfc.py "$@"
+
+
