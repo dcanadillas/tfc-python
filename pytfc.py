@@ -97,7 +97,6 @@ var_payload = {
 }
 
 # Function to list workspaces
-# TODO: We are not managing pagination of the REST responses. Needs to be implemented
 def list_workspace(organization,**kwargs):
     url = tfapi + '/organizations/' + organization + '/workspaces/'
     if kwargs:

@@ -10,6 +10,8 @@ else
     exit 0
 fi
 
+DIR="$(cd "$(dirname "$0")" && pwd)"
+
 if [[ "${@#-h}" = "$@" && "${@#--help}" = "$@" ]];then 
     echo "========>"
     echo "Terraform Organization: $1"
@@ -19,6 +21,6 @@ if [[ "${@#-h}" = "$@" && "${@#--help}" = "$@" ]];then
     read -p "Press any key to continue, or Ctrl-C to Cancel..."
 fi
 
-python3 pytfc.py "$@"
+python3 $DIR/pytfc.py "$@"
 
 
