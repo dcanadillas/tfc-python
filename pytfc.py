@@ -44,7 +44,8 @@ parser.add_argument('organization',metavar='org',help='Terraform organization')
 subparsers = parser.add_subparsers(help='sub-command help',dest='cmd')
 parser_list = subparsers.add_parser('list',help='listing items')
 parser_list.add_argument('-w',help='Workspace to list',metavar='<workspace>')
-parser_list.add_argument('--var',help='List variables',type=bool,default='True',metavar='<True|False>')
+# parser_list.add_argument('--var',help='List variables',type=bool,default='True',metavar='<True|False>')
+parser_list.add_argument('--var',help='List variables',dest='var',action='store_true')
 
 # Subparser arguments for "create" menu
 parser_create = subparsers.add_parser('create',help='Create workspace')
@@ -272,10 +273,11 @@ if __name__ == '__main__':
             wlist = getlist(org,wname=args.w)
             print(json.dumps(wlist,indent=2))
             #wvars = get_vars(org,args.w)
-            wvars = get_vars(org,wid)
-            print('\nList of variables for workspace \"' + args.w + '\" is:')
-            for i in wvars['data']:
-                print('Name: ' + i['attributes']["key"],'--','Type: ' + i['attributes']["category"],\
+            if args.var:
+            	wvars = get_vars(org,wid)
+            	print('\nList of variables for workspace \"' + args.w + '\" is:')
+            	for i in wvars['data']:
+                	print('Name: ' + i['attributes']["key"],'--','Type: ' + i['attributes']["category"],\
                     '--','id: ' + i['id'])
         else:
             # wlist = list_workspace(org)
@@ -343,13 +345,22 @@ if __name__ == '__main__':
             print(content)
             for item in content:
                 name,value,env,sensitive = item[0],item[1],item[2],item[3]
-                create_var(wid,var_payload,name=name,value=value,env=env,sensitive=sensitive)
+                var_id = [i['varid'] for i in wvars_list if name == i['varname']]
+                if not var_id:
+                    create_var(wid,var_payload,name=name,value=value,env=env,sensitive=sensitive)
+                else:
+                    update_var(wid,var_id[0],var_payload,name=name,value=value,env=env,sensitive=args.sensitive)
 
         if args.gcp:
             credsfile = json.dumps(json.load(args.gcp))
             # print(credsfile)
             var_payload['data']['attributes']['sensitive'] = 'true'
-            create_var(wid,var_payload,name='GOOGLE_CREDENTIALS',value=str(credsfile),env='env',sensitive=True)
+            # create_var(wid,var_payload,name='GOOGLE_CREDENTIALS',value=str(credsfile),env='env',sensitive=True)
+            var_id = [i['varid'] for i in wvars_list if name == i['varname']]
+            if not var_id:
+                create_var(wid,var_payload,name='GOOGLE_CREDENTIALS',value=str(credsfile),env='env',sensitive=args.sensitive)
+            else:
+                update_var(wid,var_id[0],var_payload,name='GOOGLE_CREDENTIALS',value=str(credsfile),env='env',sensitive=args.sensitive)
     if args.cmd == 'upload':
         if args.dir:
             tardir = args.dir
