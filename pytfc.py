@@ -57,6 +57,11 @@ parser_delete = subparsers.add_parser('delete',help='Delete workspace')
 parser_delete.add_argument('workspace',help='Workspace name')
 parser_delete.add_argument('--var',help='Variables to delete',nargs='*', metavar='<var_name>')
 
+# Subparser arguments for "copy" menu
+parser_delete = subparsers.add_parser('copy',help='Copy workspace variables')
+parser_delete.add_argument('srcworkspace',help='Source Workspace name')
+parser_delete.add_argument('destworkspace',help='Destination Workspace name')
+
 # Subparser arguments for "vars" menu (for create variables)
 # TODO: include a sensitive parameter --sensitive if vars are created with CLI
 parser_var = subparsers.add_parser('vars',help='Create vars')
@@ -197,6 +202,7 @@ def delete_var(workspace_id,var_id):
     # return r.json()
 
 # Function to get variables from a workspace
+# TODO: Check that 'org' parameter is not required for get_vars
 def get_vars(org,workspace_id):
     #url = tfapi + '/vars?filter[organization][name]=' + org + '&filter[workspace][name]=' + workspace
     url = tfapi + '/workspaces/' + workspace_id + '/vars'
@@ -241,6 +247,14 @@ def create_var(workspace_id,payload,**kwargs):
     except requests.exceptions.HTTPError as err:
         print(err.response.text)
         raise SystemExit(err)
+
+def copy_vars(org,source_wksp_id,dest_wkspc_id,payload):
+# TODO: Check that 'org' is not required for get_vars
+    for i in get_vars(org,source_wksp_id)['data']:
+        payload['data']['attributes'] = i['attributes']
+        print(var_payload)
+        print('----')
+        create_var(dest_wkspc_id,payload)
 
 def update_var(workspace_id,var_id,payload,**kwargs):
     if 'name' in kwargs:
@@ -356,11 +370,11 @@ if __name__ == '__main__':
             # print(credsfile)
             var_payload['data']['attributes']['sensitive'] = 'true'
             # create_var(wid,var_payload,name='GOOGLE_CREDENTIALS',value=str(credsfile),env='env',sensitive=True)
-            var_id = [i['varid'] for i in wvars_list if name == i['varname']]
+            var_id = [i['varid'] for i in wvars_list if 'GOOGLE_CREDENTIALS' == i['varname']]
             if not var_id:
-                create_var(wid,var_payload,name='GOOGLE_CREDENTIALS',value=str(credsfile),env='env',sensitive=args.sensitive)
+                create_var(wid,var_payload,name='GOOGLE_CREDENTIALS',value=str(credsfile),env='env',sensitive=True)
             else:
-                update_var(wid,var_id[0],var_payload,name='GOOGLE_CREDENTIALS',value=str(credsfile),env='env',sensitive=args.sensitive)
+                update_var(wid,var_id[0],var_payload,name='GOOGLE_CREDENTIALS',value=str(credsfile),env='env',sensitive=True)
     if args.cmd == 'upload':
         if args.dir:
             tardir = args.dir
@@ -384,4 +398,9 @@ if __name__ == '__main__':
         print('The url to upload configuration is: \n' + upconf)
 
         # Upload the configuration content
-        uploadconf.upload_conf(upfile,upconf,headers)            
+        uploadconf.upload_conf(upfile,upconf,headers) 
+    if args.cmd == 'copy':
+        src_id = get_workspc_id(org,args.srcworkspace)
+        dest_id = get_workspc_id(org,args.destworkspace)
+        copy_vars(org,src_id,dest_id,var_payload)
+                   
