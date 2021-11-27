@@ -40,8 +40,9 @@ headers = {
 parser = argparse.ArgumentParser(prog='Terraform API CLI')
 parser.add_argument('organization',metavar='org',help='Terraform organization')
 
-# Subparser for "list" menu
 subparsers = parser.add_subparsers(help='sub-command help',dest='cmd')
+
+# Subparser for "list" menu
 parser_list = subparsers.add_parser('list',help='listing items')
 parser_list.add_argument('-w',help='Workspace to list',metavar='<workspace>')
 # parser_list.add_argument('--var',help='List variables',type=bool,default='True',metavar='<True|False>')
@@ -58,9 +59,14 @@ parser_delete.add_argument('workspace',help='Workspace name')
 parser_delete.add_argument('--var',help='Variables to delete',nargs='*', metavar='<var_name>')
 
 # Subparser arguments for "copy" menu
-parser_delete = subparsers.add_parser('copy',help='Copy workspace variables')
-parser_delete.add_argument('srcworkspace',help='Source Workspace name')
-parser_delete.add_argument('destworkspace',help='Destination Workspace name')
+parser_copy = subparsers.add_parser('copy',help='Copy workspace variables')
+parser_copy.add_argument('srcworkspace',help='Source Workspace name')
+parser_copy.add_argument('destworkspace',help='Destination Workspace name')
+
+# Subparser arguments for "run" menu
+parser_run = subparsers.add_parser('run',help='Run a workspace to Apply')
+parser_run.add_argument('workspace',help='Workspace name to Apply')
+parser_run.add_argument('-m',help='Message for your run',metavar='<message>')
 
 # Subparser arguments for "vars" menu (for create variables)
 # TODO: include a sensitive parameter --sensitive if vars are created with CLI
@@ -303,6 +309,36 @@ def update_var(workspace_id,var_id,payload,**kwargs):
     except requests.exceptions.HTTPError as err:
         print(err.response.text)
         raise SystemExit(err)
+        
+def run_workspace(wid,message):
+    run_payload = {
+        "data": {
+            "attributes": {
+                "message": message
+            },
+            "type":"runs",
+            "relationships": {
+                "workspace": {
+                    "data": {
+                        "type": "workspaces",
+                        "id": wid
+                    }
+                }
+            }
+        }
+    }
+    url = tfapi + '/runs'
+    try:
+        r = requests.post(url,headers=headers,json=run_payload)
+        r.raise_for_status()
+        return r.json()
+    except requests.exceptions.HTTPError as err:
+        print(err.response.text)
+        raise SystemExit(err)
+    
+    curl_tfc(headers,url)
+
+
 
 # A function to upload variables from a *.tfvars file from Terraform
 def tf_vars(tfvars):
@@ -465,8 +501,17 @@ if __name__ == '__main__':
 
         # Upload the configuration content
         uploadconf.upload_conf(upfile,upconf,headers) 
+    
     if args.cmd == 'copy':
         src_id = get_workspc_id(org,args.srcworkspace)
         dest_id = get_workspc_id(org,args.destworkspace)
         copy_vars(org,src_id,dest_id,var_payload)
+
+    if args.cmd == 'run':
+        wid = get_workspc_id(org,args.workspace)
+        if args.m:
+            message = args.m
+        else:
+            message = 'Run from TFCPy'
+        run_workspace(wid,args.m)
                    
