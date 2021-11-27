@@ -67,6 +67,7 @@ parser_copy.add_argument('destworkspace',help='Destination Workspace name')
 parser_run = subparsers.add_parser('run',help='Run a workspace to Apply')
 parser_run.add_argument('workspace',help='Workspace name to Apply')
 parser_run.add_argument('-m',help='Message for your run',metavar='<message>')
+parser_run.add_argument('--destroy',help='Run is a destroy action',dest='destroy',action='store_true')
 
 # Subparser arguments for "vars" menu (for create variables)
 # TODO: include a sensitive parameter --sensitive if vars are created with CLI
@@ -110,7 +111,7 @@ var_payload = {
 }
 
 # Function to print the CURL command
-def curl_tfc(headers,url):
+def curl_tfc(headers,url,method):
     header = []
     # for i in headers:
     #     header.append(i)
@@ -122,6 +123,7 @@ def curl_tfc(headers,url):
             print('\t-H ' + '"' + i + ': Bearer $TOKEN" \\')
         else:
             print('\t-H ' + '"' + i + ': ' + headers[i] + '" \\')
+    print('-X ' + method + '\\')
     print('\t' + url)
     print('-----------------------')
 
@@ -172,7 +174,7 @@ def getlist(organization,**kwargs):
 
     # if kwargs['details'] is True:
     #     print(json.dumps(data,indent=2))
-    curl_tfc(headers,url)
+    curl_tfc(headers,url,'GET')
 
     return data
 
@@ -201,7 +203,7 @@ def create_workspace(organization,workspace):
         print(err.response.text)
         raise SystemExit(err)
     
-    curl_tfc(headers,url)
+    curl_tfc(headers,url,'POST')
 
 # Function to delete workspace
 def delete_workspace(workspace_id):
@@ -228,7 +230,7 @@ def delete_var(workspace_id,var_id):
         raise SystemExit(err)
     print(var_id + ' deleted...')
 
-    curl_tfc(headers,url)
+    curl_tfc(headers,url,'POST')
     # return r.json()
 
 # Function to get variables from a workspace
@@ -244,7 +246,7 @@ def get_vars(org,workspace_id):
         print(err.response.text)
         raise SystemExit(err)
 
-    curl_tfc(headers,url)
+    curl_tfc(headers,url,'GET')
     return r.json()
 
 # Function to retrieve the workspace id
@@ -281,7 +283,7 @@ def create_var(workspace_id,payload,**kwargs):
         print(err.response.text)
         raise SystemExit(err)
     
-    curl_tfc(headers,url)
+    curl_tfc(headers,url,'GET')
 
 def copy_vars(org,source_wksp_id,dest_wkspc_id,payload):
 # TODO: Check that 'org' is not required for get_vars
@@ -310,11 +312,19 @@ def update_var(workspace_id,var_id,payload,**kwargs):
         print(err.response.text)
         raise SystemExit(err)
         
-def run_workspace(wid,message):
+def run_workspace(wid,message,destroy):
+    # if 'message' in kwargs:
+    #     message = kwargs['message']
+    # else:
+    #     message = "Running from TFCPy"
+    print(destroy)
+    if destroy is True:
+        message = 'Destroying... ' + message
     run_payload = {
         "data": {
             "attributes": {
-                "message": message
+                "message": message,
+                "is-destroy": destroy
             },
             "type":"runs",
             "relationships": {
@@ -336,7 +346,7 @@ def run_workspace(wid,message):
         print(err.response.text)
         raise SystemExit(err)
     
-    curl_tfc(headers,url)
+    curl_tfc(headers,url,'POST')
 
 
 
@@ -410,7 +420,7 @@ if __name__ == '__main__':
             for item in varids:
                 delete_var(wid,item)
         else:
-            confirm_delete = input("Are you sure to delete worskpace \"%s\"? (yes/no) " % wid)
+            confirm_delete = input("Are you sure to delete worskpace \"%s\"? (y/N) " % wid)
             if confirm_delete[:1] == "y" :
                 print("delete")
                 delete_workspace(wid)
@@ -513,5 +523,12 @@ if __name__ == '__main__':
             message = args.m
         else:
             message = 'Run from TFCPy'
-        run_workspace(wid,args.m)
+        running = run_workspace(wid,message,args.destroy)
+        # print(json.dumps(running,indent=2))
+        runid = running['data']['id']
+        print('\n============================')
+        print('Run ID: ' + runid )
+        print('Plan Endpoint: https://app.terraform.io' + running['data']['relationships']['plan']['links']['related'])
+        print('Run URL: https://app.terraform.io/app/' + args.organization + '/workspaces/' + \
+            args.workspace + '/runs/' + runid)
                    
