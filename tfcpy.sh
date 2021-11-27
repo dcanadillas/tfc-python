@@ -10,14 +10,14 @@ else
     exit 0
 fi
 
-#DIR="$(cd "$(dirname "$0")" && pwd)"
-DIR="$(dirname  "$(readlink "$0")")"
+DIR="$(cd "$(dirname "$0")" && pwd)"
+# DIR="$(dirname  "$(readlink "$0")")"
 
 if [[ "${@#-h}" = "$@" && "${@#--help}" = "$@" ]];then 
-    echo "========>"
+    echo "======================>"
     echo "Terraform Organization: $1"
     echo "Commands used: ${@: 2}"
-    echo "========>"
+    echo "======================>"
     echo -e "\n\n"
     read -p "Press any key to continue, or Ctrl-C to Cancel..."
 fi

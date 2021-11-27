@@ -103,6 +103,22 @@ var_payload = {
   }
 }
 
+# Function to print the CURL command
+def curl_tfc(headers,url):
+    header = []
+    # for i in headers:
+    #     header.append(i)
+    print('\nCURL TFC/TFE command:')
+    print('-----------------------')
+    print('curl \\')
+    for i in headers:
+        if i == 'Authorization':
+            print('\t-H ' + '"' + i + ': Bearer $TOKEN" \\')
+        else:
+            print('\t-H ' + '"' + i + ': ' + headers[i] + '" \\')
+    print('\t' + url)
+    print('-----------------------')
+
 # Function to list workspaces
 def list_workspace(organization,**kwargs):
     url = tfapi + '/organizations/' + organization + '/workspaces/'
@@ -114,7 +130,7 @@ def list_workspace(organization,**kwargs):
     except requests.exceptions.HTTPError as err:
         print(err.response.text)
         raise SystemExit(err)
-
+    
     return r.json()['data']
 
 def getlist(organization,**kwargs):
@@ -150,6 +166,7 @@ def getlist(organization,**kwargs):
 
     # if kwargs['details'] is True:
     #     print(json.dumps(data,indent=2))
+    curl_tfc(headers,url)
 
     return data
 
@@ -177,6 +194,8 @@ def create_workspace(organization,workspace):
     except requests.exceptions.HTTPError as err:
         print(err.response.text)
         raise SystemExit(err)
+    
+    curl_tfc(headers,url)
 
 # Function to delete workspace
 def delete_workspace(workspace_id):
@@ -188,6 +207,8 @@ def delete_workspace(workspace_id):
         print(err.response.text)
         raise SystemExit(err)
     print(workspace_id + ' deleted...')
+    
+    curl_tfc(headers,url)
     return r.json()
 
 # Function to delete variables
@@ -200,6 +221,8 @@ def delete_var(workspace_id,var_id):
         print(err.response.text)
         raise SystemExit(err)
     print(var_id + ' deleted...')
+
+    curl_tfc(headers,url)
     # return r.json()
 
 # Function to get variables from a workspace
@@ -214,6 +237,8 @@ def get_vars(org,workspace_id):
         print(url)
         print(err.response.text)
         raise SystemExit(err)
+
+    curl_tfc(headers,url)
     return r.json()
 
 # Function to retrieve the workspace id
@@ -226,6 +251,7 @@ def get_workspc_id(organization,workspace):
         print(url)
         print(err.response.text)
         raise SystemExit(err)
+    
     return r.json()['data']['id']
 
 # Function to create variables
@@ -248,6 +274,8 @@ def create_var(workspace_id,payload,**kwargs):
     except requests.exceptions.HTTPError as err:
         print(err.response.text)
         raise SystemExit(err)
+    
+    curl_tfc(headers,url)
 
 def copy_vars(org,source_wksp_id,dest_wkspc_id,payload):
 # TODO: Check that 'org' is not required for get_vars

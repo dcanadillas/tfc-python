@@ -3,6 +3,7 @@
 This repo contains a Python wrapper to interact with [Terraform Cloud API](https://www.terraform.io/docs/cloud/api/index.html). You can do things in CLI style like:
 * **List** all TFC (Terraform Cloud) workspaces within an organization or variables from a workspace
 * **Create TFC workspaces** or **create variables** in a workspace
+* **Copy variables** between TFC workspaces
 * **Delete workspaces** in an organization or **delete variables in batch mode** from a workspace
 * **Upload a TFC configuration** version and do an [API-Driven run](https://www.terraform.io/docs/cloud/run/api.html) if not using a VCS connection
 
@@ -50,7 +51,7 @@ I started with bash scripting to play around with TFC API using `curl` for REST 
 * It's very handful to deal with JSON, lists, dictionaries and CLI arguments
 * Very straight forward to script REST calls without Curl
 * It's portable. Even though that these scripts are MacOS and Linux ready, it should be easy exporting to Windows
-* I love indentation... :-)
+* I love indentation... unless it is a YAML file :-)
 
 ## How-To Guide
 ### System requirements
@@ -83,23 +84,28 @@ You can execute the Python scripts using your `python3` command from the CLI. Bu
 tfcpy.sh <script_arguments_here>
 ```
 
+Every time you execute a command you will receive a message with the TFC organization you are using and the command you are using for the script. You will need to **press any key to continue** or **Ctrl-C to cancel**. The reason on doing this is because you might be executing a `delete` or other command that you don't want to execute against a wrong TFC organization, so you have a confirmation step.
+
+> NOTE: This confirmation step is implemented in the shell script wrapper, so you won't have it if using the Python script from python execution. 
+
 Check following execution examples:
 
 * Global command help:
     ```
     $ ./tfcpy.sh --help
-    Using Python 3.7.3
+    Using Python 3.9.7
 
     Using Terraform API token from "/home/david/.terraform.d/credentials.tfrc.json".
-    usage: Terraform API CLI [-h] org {list,create,delete,vars,upload} ...
+    usage: Terraform API CLI [-h] org {list,create,delete,copy,vars,upload} ...
 
     positional arguments:
       org                   Terraform organization
-      {list,create,delete,vars,upload}
+      {list,create,delete,copy,vars,upload}
                             sub-command help
         list                listing items
         create              Create workspace
         delete              Delete workspace
+        copy                Copy workspace variables
         vars                Create vars
         upload              upload config vars
 
@@ -110,28 +116,36 @@ Check following execution examples:
 * Help for a specific command (list workspaces)
     ```
     $ ./tfcpy.sh dcanadillas list --help
-    Using Python 3.7.7
+    Using Python 3.9.7
 
-    Using Terraform API token defined in environment variable.
-    usage: Terraform API CLI org list [-h] [-w <workspace>] [--var <True|False>]
+    Using Terraform API token from "/home/david/.terraform.d/credentials.tfrc.json".
+    usage: Terraform API CLI org list [-h] [-w <workspace>] [--var]
 
     optional arguments:
-    -h, --help          show this help message and exit
-    -w <workspace>      Workspace to list
-    --var <True|False>  List variables
+      -h, --help      show this help message and exit
+      -w <workspace>  Workspace to list
+      --var           List variables
     ```
 
 * Listing workspaces:
     ```
     $ ./tfcpy.sh dcanadillas list 
-    Using Python 3.7.7
+    Using Python 3.9.7
 
-    Using Terraform API token defined in environment variable.
-    Parameters selected: Namespace(cmd='list', organization='dcanadillas', var=True, w=None)
+    ========>
+    Terraform Organization: dcanadillas
+    Commands used: list
+    ========>
+
+
+
+    Press any key to continue, or Ctrl-C to Cancel...
+    Using Terraform API token from "/home/david/.terraform.d/credentials.tfrc.json".
+    Parameters selected: Namespace(organization='dcanadillas', cmd='list', w=None, var=False)
 
     Summary list of names and ids:
-    Workspace: vault-gke-sec --- id: ws-KdRWVngCCSkQQBS4
-    Workspace: vault-gke --- id: ws-iPSySep1svrW7DDC
+    Workspace: demo1 --- id: ws-aJHZrWmd1EqN9xHp
+    Workspace: hashicorp-playground --- id: ws-DDVsiM34zdqAVDDW
     ...
     ...
     ```
@@ -168,6 +182,13 @@ The `workspaces.py` script is used to manage workspaces and variables from a bas
     --var <varname1> <varname2> ...
     ```
 
+* `copy`
+  * Copies a source workspace from a TFC organization to a destination workspace in the same organization
+    ```
+    tfcpy.sh <organization> copy <src_workspace_name> <dest_workspace_name>
+    ```
+
+
 * `vars`
   * Create variables in a workspace from CLI values (as environment variables with `--env`)
     
@@ -177,6 +198,11 @@ The `workspaces.py` script is used to manage workspaces and variables from a bas
     -v <var1_name> <var1_value -v <var2_name> <var2_value> [--env]
     ```
   * Create variables in a workspace from CSV text file (Format: `name`,`value`,`category[env|terraform]`,`sensitive[true|false]`. First row is ignored)
+    ```
+    tfcpy.sh <organization> vars <workspace_name> \
+    -f <csv_file_path>
+    ```
+  * Create variables in a workspace from a Terraform `tfvars` file (Format: `key = "value"` )
     ```
     tfcpy.sh <organization> vars <workspace_name> \
     -f <csv_file_path>
@@ -218,4 +244,6 @@ You can execute the help menu for every command with `-h` or `--help` argument.
 
 ### Quickstart ephemeral workspaces for Development
 > TODO: Content pending
+
+
  
