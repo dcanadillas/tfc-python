@@ -68,6 +68,7 @@ parser_var = subparsers.add_parser('vars',help='Create vars')
 parser_var.add_argument('workspace',help='Workspace')
 parser_var.add_argument('-v',help='Vars values',nargs=2,action='append',metavar='<var_name> <var_value>')
 parser_var.add_argument('-f',help='File with var values',type=argparse.FileType('r'))
+parser_var.add_argument('-tfvars',help='TFVars file with var values',type=argparse.FileType('r'))
 parser_var.add_argument('--env',help='Environment variable',action='store_true',default=False)
 parser_var.add_argument('--gcp',type=argparse.FileType('r'),help='GOOGLE_CREDENTIALS key JSON file',\
     metavar='<key_file_path>')
@@ -275,6 +276,31 @@ def update_var(workspace_id,var_id,payload,**kwargs):
         print(err.response.text)
         raise SystemExit(err)
 
+# A function to upload variables from a *.tfvars file from Terraform
+def tf_vars(tfvars):
+    file = open(tfvars, "r")
+
+    content = []
+    lines = file.readlines()
+    attributes = ['terraform','false']
+    # print(lines)
+
+    for line in lines:
+        if line == "\n":
+            print("Skipping empty line")
+        elif line.startswith("#"):
+            print("Skipping commented line")
+        else:
+            line = line.strip().replace(" ","")
+            line = line.replace("\"","")
+            line = line.split('=')
+            line.extend(attributes)
+            
+            
+            content.append(line)
+    
+    return content
+
 # Fun starts here
 # TODO: check for cleaning and wrapping some actions
 if __name__ == '__main__':
@@ -364,6 +390,18 @@ if __name__ == '__main__':
                     create_var(wid,var_payload,name=name,value=value,env=env,sensitive=sensitive)
                 else:
                     update_var(wid,var_id[0],var_payload,name=name,value=value,env=env,sensitive=args.sensitive)
+        
+        if args.tfvars:
+            content = tf_vars(args.tfvars.name)
+            print(content)
+            for item in content:
+                name,value,env,sensitive = item[0],item[1],item[2],item[3]
+                var_id = [i['varid'] for i in wvars_list if name == i['varname']]
+                if not var_id:
+                    create_var(wid,var_payload,name=name,value=value,env=env,sensitive=sensitive)
+                else:
+                    update_var(wid,var_id[0],var_payload,name=name,value=value,env=env,sensitive=args.sensitive)
+
 
         if args.gcp:
             credsfile = json.dumps(json.load(args.gcp))
