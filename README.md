@@ -183,7 +183,7 @@ The `workspaces.py` script is used to manage workspaces and variables from a bas
     ```
 
 * `copy`
-  * Copies a source workspace from a TFC organization to a destination workspace in the same organization
+  * Copy variables from a source workspace in a TFC organization to a destination workspace in the same organization
     ```
     tfcpy.sh <organization> copy <src_workspace_name> <dest_workspace_name>
     ```
@@ -214,7 +214,7 @@ The `workspaces.py` script is used to manage workspaces and variables from a bas
   * Create variables in a workspace from a Terraform `tfvars` file (Format: `key = "value"` )
     ```
     tfcpy.sh <organization> vars <workspace_name> \
-    -f <csv_file_path>
+    -tfvars <tfvars_file_path>
     ```
   * Create Google Cloud Platform credentials variable from a key JSON GCP file
     ```
