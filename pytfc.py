@@ -123,7 +123,7 @@ def curl_tfc(headers,url,method):
             print('\t-H ' + '"' + i + ': Bearer $TOKEN" \\')
         else:
             print('\t-H ' + '"' + i + ': ' + headers[i] + '" \\')
-    print('-X ' + method + '\\')
+    print('\t-X ' + method + ' \\')
     print('\t' + url)
     print('-----------------------')
 
@@ -531,4 +531,6 @@ if __name__ == '__main__':
         print('Plan Endpoint: https://app.terraform.io' + running['data']['relationships']['plan']['links']['related'])
         print('Run URL: https://app.terraform.io/app/' + args.organization + '/workspaces/' + \
             args.workspace + '/runs/' + runid)
+    
+    print('\n======\n')
                    

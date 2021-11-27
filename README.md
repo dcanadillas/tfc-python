@@ -188,6 +188,15 @@ The `workspaces.py` script is used to manage workspaces and variables from a bas
     tfcpy.sh <organization> copy <src_workspace_name> <dest_workspace_name>
     ```
 
+* `run`
+  * It triggers an **Apply** in the workspace. You can type a message for the Apply using `-m "<your_message>"`
+    ```
+    tfcpy.sh <organization> run <workspace_name> -m "<your_run_message">
+    ```
+  * It triggers a **Destroy** in the workspace using the option `--destroy`
+    ```
+    tfcpy.sh <organization> run <workspace_name> --destroy
+    ```
 
 * `vars`
   * Create variables in a workspace from CLI values (as environment variables with `--env`)
