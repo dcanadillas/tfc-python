@@ -10,8 +10,11 @@ else
     exit 0
 fi
 
-DIR="$(cd "$(dirname "$0")" && pwd)"
-# DIR="$(dirname  "$(readlink "$0")")"
+if [ -L "$0" ];then 
+    DIR="$(dirname  "$(readlink "$0")")"
+else
+    DIR="$(cd "$(dirname "$0")" && pwd)"
+fi
 
 if [[ "${@#-h}" = "$@" && "${@#--help}" = "$@" ]];then 
     echo "======================>"
