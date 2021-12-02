@@ -16,12 +16,22 @@ import requests
 
 tfapi = 'https://app.terraform.io/api/v2'
 
+# Function to filter files for TFStates and .terraform config dir
+def filter_func(tarinfo):
+  if os.path.splitext(tarinfo.name)[1] == '.tfstate':
+    return None
+  if os.path.split(tarinfo.name)[1] == '.terraform' and os.path.isdir(tarinfo.name):
+    print(tarinfo.name)
+    return None
+  #print(tarinfo.name)
+  return tarinfo
+
 # Function to create a tar.gz file
 def create_upload(tardir,tfcfile):
     # If we use '-d' paramater lets use that directory, if not we use the current dir
-
+    exclude_files = ['.']
     with tarfile.open(tfcfile,'w:gz') as tar:
-        tar.add(tardir,recursive=True,arcname='.')
+        tar.add(tardir,recursive=True,arcname='.',filter=filter_func)
     return os.path.realpath(tfcfile)
 
 # Function to get the workspace id

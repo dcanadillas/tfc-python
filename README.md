@@ -189,13 +189,17 @@ The `workspaces.py` script is used to manage workspaces and variables from a bas
     ```
 
 * `run`
-  * It triggers an **Apply** in the workspace. You can type a message for the Apply using `-m "<your_message>"`
+  * It triggers an **Apply** in the workspace.
     ```
     tfcpy.sh <organization> run <workspace_name> -m "<your_run_message">
     ```
   * It triggers a **Destroy** in the workspace using the option `--destroy`
     ```
     tfcpy.sh <organization> run <workspace_name> --destroy
+    ```
+  * You can type a message for the **Apply** or **Destroy** using `-m "<your_message>"`. Also the run can be `auto-applied` by using the option `--auto`
+    ```
+    tfcpy.sh <organization> run <workspace_name> -m "<your_run_message"> --auto
     ```
 
 * `vars`
@@ -211,7 +215,7 @@ The `workspaces.py` script is used to manage workspaces and variables from a bas
     tfcpy.sh <organization> vars <workspace_name> \
     -f <csv_file_path>
     ```
-  * Create variables in a workspace from a Terraform `tfvars` file (Format: `key = "value"` )
+  * Create string variables in a workspace from a Terraform `tfvars` file (Format: `key = "value"` ). *HCL variable type will be recognized if its value in `tfvars` file is starting with `[` or `{`* 
     ```
     tfcpy.sh <organization> vars <workspace_name> \
     -tfvars <tfvars_file_path>

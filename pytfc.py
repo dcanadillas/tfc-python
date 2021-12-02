@@ -68,6 +68,7 @@ parser_run = subparsers.add_parser('run',help='Run a workspace to Apply')
 parser_run.add_argument('workspace',help='Workspace name to Apply')
 parser_run.add_argument('-m',help='Message for your run',metavar='<message>')
 parser_run.add_argument('--destroy',help='Run is a destroy action',dest='destroy',action='store_true')
+parser_run.add_argument('--auto',help='Auto-Apply the run',dest='auto',action='store_true')
 
 # Subparser arguments for "vars" menu (for create variables)
 # TODO: include a sensitive parameter --sensitive if vars are created with CLI
@@ -312,19 +313,19 @@ def update_var(workspace_id,var_id,payload,**kwargs):
         print(err.response.text)
         raise SystemExit(err)
         
-def run_workspace(wid,message,destroy):
+def run_workspace(wid,message,destroy,auto):
     # if 'message' in kwargs:
     #     message = kwargs['message']
     # else:
     #     message = "Running from TFCPy"
-    print(destroy)
     if destroy is True:
         message = 'Destroying... ' + message
     run_payload = {
         "data": {
             "attributes": {
                 "message": message,
-                "is-destroy": destroy
+                "is-destroy": destroy,
+                "auto-apply": auto 
             },
             "type":"runs",
             "relationships": {
@@ -356,7 +357,8 @@ def tf_vars(tfvars):
 
     content = []
     lines = file.readlines()
-    attributes = ['terraform','false']
+    # This is to represent (variable type),(sensitive),(hcl)
+    attributes = ['terraform','false','false']
     # print(lines)
 
     for line in lines:
@@ -365,9 +367,15 @@ def tf_vars(tfvars):
         elif line.startswith("#"):
             print("Skipping commented line")
         else:
+            print('this is my line: ' + line)
             line = line.strip().replace(" ","")
-            line = line.replace("\"","")
-            line = line.split('=')
+            line = line.split('=',1)
+            # If the value starts with '[' or '{' let's use a HCL variable value and not replace the double quotes
+            if line[1].startswith('[') or line[1].startswith('{'):
+                attributes[2] = 'true'
+            else:
+                line[1] = line[1].replace("\"","")
+            
             line.extend(attributes)
             
             
@@ -470,6 +478,8 @@ if __name__ == '__main__':
             print(content)
             for item in content:
                 name,value,env,sensitive = item[0],item[1],item[2],item[3]
+                if item[4] is 'true':
+                    var_payload['data']['attributes']['hcl'] = True
                 var_id = [i['varid'] for i in wvars_list if name == i['varname']]
                 if not var_id:
                     create_var(wid,var_payload,name=name,value=value,env=env,sensitive=sensitive)
@@ -523,7 +533,7 @@ if __name__ == '__main__':
             message = args.m
         else:
             message = 'Run from TFCPy'
-        running = run_workspace(wid,message,args.destroy)
+        running = run_workspace(wid,message,args.destroy,args.auto)
         # print(json.dumps(running,indent=2))
         runid = running['data']['id']
         print('\n============================')
