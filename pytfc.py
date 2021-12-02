@@ -358,7 +358,7 @@ def tf_vars(tfvars):
     content = []
     lines = file.readlines()
     # This is to represent (variable type),(sensitive),(hcl)
-    attributes = ['terraform','false','false']
+    attributes = ['terraform','false',False]
     # print(lines)
 
     for line in lines:
@@ -367,7 +367,6 @@ def tf_vars(tfvars):
         elif line.startswith("#"):
             print("Skipping commented line")
         else:
-            print('this is my line: ' + line)
             line = line.strip().replace(" ","")
             line = line.split('=',1)
             # If the value starts with '[' or '{' let's use a HCL variable value and not replace the double quotes
@@ -478,7 +477,7 @@ if __name__ == '__main__':
             print(content)
             for item in content:
                 name,value,env,sensitive = item[0],item[1],item[2],item[3]
-                if item[4] is 'true':
+                if item[4]:
                     var_payload['data']['attributes']['hcl'] = True
                 var_id = [i['varid'] for i in wvars_list if name == i['varname']]
                 if not var_id:
